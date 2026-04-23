@@ -1,24 +1,18 @@
-//
-//  ContentView.swift
-//  FeedFlow
-//
-//  Created by Arturo Rey Soto on 23/04/2026.
-//
-
 import SwiftUI
 
 struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
-}
+    @StateObject private var store = FeedStore()
 
-#Preview {
-    ContentView()
+    var body: some View {
+        NavigationSplitView {
+            SidebarView(store: store)
+                .navigationSplitViewColumnWidth(min: 180, ideal: 220)
+        } content: {
+            ArticleListView(store: store)
+                .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+        } detail: {
+            ArticleDetailView(store: store)
+        }
+        .navigationTitle("FeedFlow")
+    }
 }
