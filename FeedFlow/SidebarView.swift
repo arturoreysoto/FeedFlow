@@ -2,70 +2,124 @@ import SwiftUI
 
 struct SidebarView: View {
     @ObservedObject var store: FeedStore
+    @State private var showAddFeed = false
+    @State private var newFeedTitle = ""
+    @State private var newFeedURL = ""
 
     var body: some View {
         List {
             Section("Feeds") {
-                SidebarRow(icon: "tray.and.arrow.down", title: "Inbox", isSelected: store.selectedFeed == nil) {
+                Button {
                     store.selectedFeed = nil
+                } label: {
+                    Label("Inbox", systemImage: "tray.and.arrow.down")
                 }
 
-                SidebarRow(icon: "shuffle", title: "Flow", isSelected: false) {
+                Button {
                     store.flowRandom()
+                } label: {
+                    Label("Flow", systemImage: "shuffle")
                 }
 
-                SidebarRow(icon: "square.grid.2x2", title: "Flow Feeds", isSelected: false) {}
+                Button {} label: {
+                    Label("Flow Feeds", systemImage: "square.grid.2x2")
+                }
 
                 ForEach(store.feeds) { feed in
-                    SidebarRow(icon: "dot.radiowaves.up.forward", title: feed.title, isSelected: store.selectedFeed?.id == feed.id) {
+                    Button {
                         store.selectedFeed = feed
                         store.fetchFeed(feed: feed)
+                    } label: {
+                        Label(feed.title, systemImage: "dot.radiowaves.up.forward")
                     }
+                }
+                .onDelete { indexSet in
+                    store.feeds.remove(atOffsets: indexSet)
                 }
             }
 
             Section {
-                SidebarRow(icon: "trash", title: "Trash", isSelected: false) {}
+                Button {} label: {
+                    Label("Trash", systemImage: "trash")
+                }
             }
         }
         .listStyle(.sidebar)
-        .background(Color(hex: "#F7F6F3"))
-        .scrollContentBackground(.hidden)
+        .toolbar {
+            ToolbarItem {
+                Button {
+                    showAddFeed = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+        }
+        .sheet(isPresented: $showAddFeed) {
+            AddFeedView(store: store, isPresented: $showAddFeed)
+        }
     }
 }
 
-struct SidebarRow: View {
-    let icon: String
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    @State private var isHovered = false
+struct AddFeedView: View {
+    @ObservedObject var store: FeedStore
+    @Binding var isPresented: Bool
+    @State private var title = ""
+    @State private var url = ""
+    @FocusState private var urlFocused: Bool
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.system(size: 13))
-                    .foregroundStyle(isSelected ? Color(hex: "#FF736A") : Color(hex: "#606060"))
-                    .frame(width: 16)
-                Text(title)
-                    .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? Color(hex: "#FF736A") : Color(hex: "#606060"))
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Button("Cancel") {
+                    isPresented = false
+                }
                 Spacer()
+                Text("Add Feed")
+                    .font(.system(size: 13, weight: .semibold))
+                Spacer()
+                Button("Add") {
+                    addFeed()
+                }
+                .disabled(url.isEmpty)
+                .fontWeight(.semibold)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isHovered ? Color(hex: "#E8E7E4") : Color.clear)
-            )
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
-                isHovered = hovering
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+
+            Divider()
+
+            VStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Name")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    TextField("My Feed", text: $title)
+                        .textFieldStyle(.roundedBorder)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("URL")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    TextField("https://example.com/feed", text: $url)
+                        .textFieldStyle(.roundedBorder)
+                        .focused($urlFocused)
+                }
             }
+            .padding(20)
+
+            Spacer()
         }
-        .listRowBackground(Color.clear)
+        .frame(width: 340, height: 220)
+        .onAppear { urlFocused = true }
+    }
+
+    func addFeed() {
+        let feedTitle = title.isEmpty ? url : title
+        let newFeed = Feed(title: feedTitle, url: url)
+        store.feeds.append(newFeed)
+        store.fetchFeed(feed: newFeed)
+        isPresented = false
     }
 }
