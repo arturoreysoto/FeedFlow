@@ -59,9 +59,11 @@ class RSSParser: NSObject, XMLParserDelegate {
     private var currentTitle = ""
     private var currentLink = ""
     private var currentDescription = ""
+    private var currentContent = ""
     private var currentPubDate = ""
+    private var currentImageURL = ""
+    private var channelImageURL = ""
     private var insideItem = false
-    private var insideMediaGroup = false
 
     init(data: Data) { self.data = data }
 
@@ -80,20 +82,40 @@ class RSSParser: NSObject, XMLParserDelegate {
             currentTitle = ""
             currentLink = ""
             currentDescription = ""
+            currentContent = ""
             currentPubDate = ""
+            currentImageURL = ""
         }
 
-        // Atom format — YouTube usa <link href="..."/>
         if element == "link" && insideItem {
             if let href = attributes["href"], !href.isEmpty {
                 currentLink = href
             }
         }
 
-        // YouTube miniatura
-        if element == "media:thumbnail" && insideItem {
+        if element == "enclosure" && insideItem {
+            if let url = attributes["url"],
+               let type = attributes["type"],
+               type.hasPrefix("image") {
+                currentImageURL = url
+            }
+        }
+
+        if (element == "media:content" || element == "media:thumbnail") && insideItem {
             if let url = attributes["url"] {
-                currentDescription = "<img src='\(url)' style='width:100%;border-radius:8px;'>"
+                currentImageURL = url
+            }
+        }
+
+        if element == "itunes:image" && insideItem {
+            if let href = attributes["href"], !href.isEmpty {
+                currentImageURL = href
+            }
+        }
+
+        if element == "itunes:image" && !insideItem {
+            if let href = attributes["href"], !href.isEmpty {
+                channelImageURL = href
             }
         }
     }
@@ -104,14 +126,40 @@ class RSSParser: NSObject, XMLParserDelegate {
         case "title":
             currentTitle += string
         case "link":
-            // Solo RSS clásico — Atom ya captura el href en didStartElement
             if currentLink.isEmpty {
                 currentLink += string
             }
-        case "description", "summary", "content", "content:encoded":
-            currentDescription += string
+        case "description", "summary":
+            if currentContent.isEmpty {
+                currentDescription += string
+            }
+        case "content:encoded":
+            currentContent += string
+        case "content":
+            if currentContent.isEmpty {
+                currentContent += string
+            }
         case "pubDate", "published", "updated":
             currentPubDate += string
+        default:
+            break
+        }
+    }
+
+    func parser(_ parser: XMLParser, foundCDATA CDATABlock: Data) {
+        guard insideItem else { return }
+        guard let string = String(data: CDATABlock, encoding: .utf8) else { return }
+        switch currentElement {
+        case "content:encoded":
+            currentContent += string
+        case "description", "summary":
+            if currentContent.isEmpty {
+                currentDescription += string
+            }
+        case "content":
+            if currentContent.isEmpty {
+                currentContent += string
+            }
         default:
             break
         }
@@ -121,14 +169,21 @@ class RSSParser: NSObject, XMLParserDelegate {
         if element == "item" || element == "entry" {
             let title = currentTitle.trimmingCharacters(in: .whitespacesAndNewlines)
             let link = currentLink.trimmingCharacters(in: .whitespacesAndNewlines)
-            let description = currentDescription.trimmingCharacters(in: .whitespacesAndNewlines)
             let pubDate = currentPubDate.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            let rawContent = currentContent.isEmpty ? currentDescription : currentContent
+            var finalContent = rawContent.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            let imageToUse = currentImageURL.isEmpty ? channelImageURL : currentImageURL
+            if !imageToUse.isEmpty && !finalContent.contains(imageToUse) {
+                finalContent = "<img src='\(imageToUse)' loading='lazy' style='width:50%;border-radius:12px;margin-bottom:24px;'>" + finalContent
+            }
 
             if !title.isEmpty {
                 articles.append(Article(
                     title: title,
                     link: link,
-                    description: description,
+                    description: finalContent,
                     pubDate: pubDate
                 ))
             }
