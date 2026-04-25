@@ -37,6 +37,16 @@ class FeedStore: ObservableObject {
             }
         }.resume()
     }
+
+    func flowRandom() {
+        let allArticles = feeds.flatMap { $0.articles }
+        guard !allArticles.isEmpty else {
+            // Si no hay artículos cargados, cargar todos los feeds primero
+            feeds.forEach { fetchFeed(feed: $0) }
+            return
+        }
+        selectedArticle = allArticles.randomElement()
+    }
 }
 
 class RSSParser: NSObject, XMLParserDelegate {

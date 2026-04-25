@@ -4,111 +4,60 @@ struct SidebarView: View {
     @ObservedObject var store: FeedStore
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 2) {
-                SidebarItem(
-                    icon: "tray.and.arrow.down",
-                    title: "Inbox",
-                    isSelected: store.selectedFeed == nil,
-                    accentColor: Color(hex: "#FF736A")
-                ) {
+        List {
+            Section("Feeds") {
+                SidebarRow(icon: "tray.and.arrow.down", title: "Inbox", isSelected: store.selectedFeed == nil) {
                     store.selectedFeed = nil
                 }
 
-                SidebarItem(
-                    icon: "square.grid.2x2",
-                    title: "Flow Feeds",
-                    isSelected: false,
-                    accentColor: Color(hex: "#606060")
-                ) {}
+                SidebarRow(icon: "shuffle", title: "Flow", isSelected: false) {
+                    store.flowRandom()
+                }
+
+                SidebarRow(icon: "square.grid.2x2", title: "Flow Feeds", isSelected: false) {}
 
                 ForEach(store.feeds) { feed in
-                    SidebarItem(
-                        icon: "dot.radiowaves.up.forward",
-                        title: feed.title,
-                        isSelected: store.selectedFeed?.id == feed.id,
-                        accentColor: Color(hex: "#606060")
-                    ) {
+                    SidebarRow(icon: "dot.radiowaves.up.forward", title: feed.title, isSelected: store.selectedFeed?.id == feed.id) {
                         store.selectedFeed = feed
                         store.fetchFeed(feed: feed)
                     }
                 }
-
-                Divider()
-                    .background(Color(hex: "#E9E9E7"))
-                    .padding(.vertical, 8)
-
-                SidebarItem(
-                    icon: "trash",
-                    title: "Trash",
-                    isSelected: false,
-                    accentColor: Color(hex: "#606060")
-                ) {}
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 12)
 
-            Spacer()
-
-            Divider()
-                .background(Color(hex: "#E9E9E7"))
-
-            HStack {
-                HStack(spacing: 4) {
-                    Image(systemName: "folder")
-                        .font(.system(size: 10))
-                    Text("FeedFlow")
-                        .font(.system(size: 10, weight: .medium))
-                }
-                .foregroundStyle(Color(hex: "#606060"))
-
-                Spacer()
-
-                Divider()
-                    .frame(height: 16)
-
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.clockwise.circle")
-                        .font(.system(size: 10))
-                    Text("Release v1.0.0")
-                        .font(.system(size: 10, weight: .medium))
-                }
-                .foregroundStyle(Color(hex: "#606060"))
+            Section {
+                SidebarRow(icon: "trash", title: "Trash", isSelected: false) {}
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
         }
+        .listStyle(.sidebar)
         .background(Color(hex: "#F7F6F3"))
+        .scrollContentBackground(.hidden)
     }
 }
 
-struct SidebarItem: View {
+struct SidebarRow: View {
     let icon: String
     let title: String
     let isSelected: Bool
-    let accentColor: Color
     let action: () -> Void
     @State private var isHovered = false
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 14) {
+            HStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.system(size: 14))
+                    .font(.system(size: 13))
                     .foregroundStyle(isSelected ? Color(hex: "#FF736A") : Color(hex: "#606060"))
                     .frame(width: 16)
-
                 Text(title)
-                    .font(.system(size: 14, weight: isSelected ? .bold : .medium))
+                    .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
                     .foregroundStyle(isSelected ? Color(hex: "#FF736A") : Color(hex: "#606060"))
-
                 Spacer()
             }
-            .padding(.horizontal, 15)
-            .padding(.vertical, 7)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
             .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(isSelected ? Color.white : isHovered ? Color.white.opacity(0.5) : Color.clear)
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isHovered ? Color(hex: "#E8E7E4") : Color.clear)
             )
         }
         .buttonStyle(.plain)
@@ -117,17 +66,6 @@ struct SidebarItem: View {
                 isHovered = hovering
             }
         }
-    }
-}
-
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let r = Double((int >> 16) & 0xFF) / 255
-        let g = Double((int >> 8) & 0xFF) / 255
-        let b = Double(int & 0xFF) / 255
-        self.init(red: r, green: g, blue: b)
+        .listRowBackground(Color.clear)
     }
 }

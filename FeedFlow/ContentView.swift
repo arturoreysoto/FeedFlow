@@ -13,6 +13,6 @@ struct ContentView: View {
         } detail: {
             ArticleDetailView(store: store)
         }
-        .background(Color(hex: "#F7F6F3"))
+        .background(Color(red: 0.969, green: 0.965, blue: 0.953))
     }
 }
