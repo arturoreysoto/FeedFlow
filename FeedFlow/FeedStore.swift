@@ -13,6 +13,7 @@ struct Article: Identifiable {
     var title: String
     var link: String
     var description: String
+    var cleanDescription: String = ""
     var pubDate: String
     var isRead: Bool = false
 }
@@ -21,22 +22,29 @@ class FeedStore: ObservableObject {
     @Published var feeds: [Feed] = []
     @Published var selectedFeed: Feed? = nil
     @Published var selectedArticle: Article? = nil
+    @Published var isLoading: Bool = false
 
     func fetchFeed(feed: Feed) {
         guard let url = URL(string: feed.url) else { return }
+        DispatchQueue.main.async { self.isLoading = true }
         var request = URLRequest(url: url)
         request.setValue("FeedFlow/1.0 (macOS; RSS Reader)", forHTTPHeaderField: "User-Agent")
         URLSession.shared.dataTask(with: request) { data, _, _ in
-            guard let data = data else { return }
-            let parser = RSSParser(data: data)
-            let articles = parser.parse()
-            DispatchQueue.main.async {
-                if let index = self.feeds.firstIndex(where: { $0.id == feed.id }) {
-                    self.feeds[index].articles = articles
-                    // ← si este feed es el seleccionado, actualizarlo también
-                    if self.selectedFeed?.id == feed.id {
-                        self.selectedFeed = self.feeds[index]
+            guard let data = data else {
+                DispatchQueue.main.async { self.isLoading = false }
+                return
+            }
+            DispatchQueue.global(qos: .userInitiated).async {
+                let parser = RSSParser(data: data)
+                let articles = parser.parse()
+                DispatchQueue.main.async {
+                    if let index = self.feeds.firstIndex(where: { $0.id == feed.id }) {
+                        self.feeds[index].articles = articles
+                        if self.selectedFeed?.id == feed.id {
+                            self.selectedFeed = self.feeds[index]
+                        }
                     }
+                    self.isLoading = false
                 }
             }
         }.resume()
@@ -179,11 +187,18 @@ class RSSParser: NSObject, XMLParserDelegate {
                 finalContent = "<img src='\(imageToUse)' loading='lazy' style='width:50%;border-radius:12px;margin-bottom:24px;'>" + finalContent
             }
 
+            // Texto limpio para la lista — sin NSAttributedString en el hilo principal
+            let cleanDescription = finalContent
+                .replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
+                .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+
             if !title.isEmpty {
                 articles.append(Article(
                     title: title,
                     link: link,
                     description: finalContent,
+                    cleanDescription: cleanDescription,
                     pubDate: pubDate
                 ))
             }

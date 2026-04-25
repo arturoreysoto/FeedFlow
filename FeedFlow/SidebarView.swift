@@ -13,6 +13,7 @@ struct SidebarView: View {
                     isSelected: store.selectedFeed == nil
                 ) {
                     store.selectedFeed = nil
+                    store.selectedArticle = nil
                 }
 
                 sidebarButton(
@@ -51,6 +52,10 @@ struct SidebarView: View {
                         .contextMenu {
                             Button(role: .destructive) {
                                 if let index = store.feeds.firstIndex(where: { $0.id == feed.id }) {
+                                    if store.selectedFeed?.id == feed.id {
+                                        store.selectedFeed = nil
+                                        store.selectedArticle = nil
+                                    }
                                     store.feeds.remove(at: index)
                                 }
                             } label: {
@@ -59,6 +64,12 @@ struct SidebarView: View {
                         }
                     }
                     .onDelete { indexSet in
+                        indexSet.forEach { index in
+                            if store.selectedFeed?.id == store.feeds[index].id {
+                                store.selectedFeed = nil
+                                store.selectedArticle = nil
+                            }
+                        }
                         store.feeds.remove(atOffsets: indexSet)
                     }
                 } label: {
@@ -83,7 +94,7 @@ struct SidebarView: View {
                 Button {
                     showAddFeed = true
                 } label: {
-                    Image(systemName: "plus.app")  // ← cambiado
+                    Image(systemName: "plus.app")
                         .foregroundColor(Color(hex: "#606060"))
                 }
             }

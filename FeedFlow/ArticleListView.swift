@@ -5,7 +5,18 @@ struct ArticleListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if let feed = store.selectedFeed, !feed.articles.isEmpty {
+            if store.isLoading {
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .scaleEffect(0.8)
+                    Text("Loading...")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "#999999"))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(hex: "#FFFDF8"))
+            } else if let feed = store.selectedFeed, !feed.articles.isEmpty {
                 List {
                     ForEach(feed.articles) { article in
                         ArticleRow(article: article, isSelected: store.selectedArticle?.id == article.id)
@@ -42,27 +53,38 @@ struct ArticleRow: View {
     let isSelected: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(article.title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Color(hex: "#1A1A1A"))
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 3) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(article.title)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(Color(hex: "#1A1A1A"))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
 
-            if !article.description.isEmpty {
-                Text(article.description.strippedHTML)
-                    .font(.system(size: 12))
-                    .foregroundColor(Color(hex: "#606060"))
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                    Text(article.pubDate.formattedDate)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(Color(hex: "#999999"))
+                        .padding(.top, 2)
+
+                    if !article.cleanDescription.isEmpty {
+                        Text(article.cleanDescription)
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundColor(Color(hex: "#606060"))
+                            .lineLimit(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 3)
+                    }
+                }
+                Spacer()
             }
 
-            Text(article.pubDate.formattedDate)
-                .font(.system(size: 11))
-                .foregroundColor(Color(hex: "#999999"))
+            Divider()
+                .background(Color(hex: "#E8E8E5"))
+                .padding(.top, 14)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
         .padding(.horizontal, 30)
         .background(isSelected ? Color(hex: "#ECEAE4") : Color.clear)
     }
@@ -70,16 +92,6 @@ struct ArticleRow: View {
 
 // MARK: - Helpers
 extension String {
-    var strippedHTML: String {
-        guard let data = self.data(using: .utf8) else { return self }
-        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
-            .documentType: NSAttributedString.DocumentType.html,
-            .characterEncoding: String.Encoding.utf8.rawValue
-        ]
-        let attributed = try? NSAttributedString(data: data, options: options, documentAttributes: nil)
-        return attributed?.string ?? self
-    }
-
     var formattedDate: String {
         let formatters: [DateFormatter] = {
             let f1 = DateFormatter()
