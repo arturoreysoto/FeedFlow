@@ -18,6 +18,7 @@ struct ArticleDetailView: View {
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(hex: "#FFFDF8"))
             }
         }
     }
@@ -31,6 +32,7 @@ struct ReaderView: NSViewRepresentable {
         config.userContentController.add(context.coordinator, name: "readerContent")
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
+        webView.setValue(false, forKey: "drawsBackground")
         return webView
     }
 
@@ -154,37 +156,57 @@ struct ReaderView: NSViewRepresentable {
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body {
-                    font-family: -apple-system, Georgia, serif;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
                     font-size: 17px;
-                    line-height: 1.75;
-                    color: #1A1A1A;
-                    background: #FFFFFF;
-                    max-width: 680px;
+                    line-height: 1.8;
+                    color: #2A2A2A;
+                    background: #FFFDF8;
+                    padding: 40px 40px 100px 40px;
+                    max-width: 700px;
                     margin: 0 auto;
-                    padding: 40px 24px 80px 24px;
                 }
-                .article-title { font-size: 26px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; }
-                .article-byline { font-size: 13px; color: #999999; margin-bottom: 24px; }
-                .article-divider { border: none; border-top: 1px solid #E9E9E7; margin-bottom: 24px; }
-                h1 { font-size: 24px; font-weight: 700; margin: 24px 0 12px; }
-                h2 { font-size: 20px; font-weight: 600; margin: 20px 0 10px; }
-                h3 { font-size: 17px; font-weight: 600; margin: 16px 0 8px; }
-                p { margin-bottom: 18px; color: #333333; }
+                .article-source {
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #999999;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 8px;
+                }
+                .article-title {
+                    font-size: 26px;
+                    font-weight: 700;
+                    line-height: 1.25;
+                    color: #1A1A1A;
+                    margin-bottom: 24px;
+                    letter-spacing: -0.3px;
+                    text-align: left;
+                }
+                .article-divider {
+                    border: none;
+                    border-top: 1px solid #E8E8E5;
+                    margin: 0 0 28px 0;
+                }
+                p { margin-bottom: 20px; color: #333333; line-height: 1.8; }
+                h1 { font-size: 22px; font-weight: 700; margin: 32px 0 12px; color: #1A1A1A; }
+                h2 { font-size: 19px; font-weight: 600; margin: 28px 0 10px; color: #1A1A1A; }
+                h3 { font-size: 16px; font-weight: 600; margin: 20px 0 8px; color: #1A1A1A; }
                 a { color: #FF736A; text-decoration: none; }
-                img { max-width: 100%; border-radius: 8px; margin: 20px 0; display: block; }
-                blockquote { border-left: 3px solid #FF736A; padding-left: 16px; margin: 20px 0; color: #666666; font-style: italic; }
-                code { background: #F5F5F5; padding: 2px 6px; border-radius: 4px; font-family: 'SF Mono', monospace; font-size: 14px; }
-                pre { background: #F5F5F5; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 20px 0; }
-                ul, ol { margin: 16px 0; padding-left: 24px; }
-                li { margin-bottom: 6px; }
-                figure { margin: 20px 0; }
-                figcaption { font-size: 13px; color: #999999; margin-top: 8px; }
+                a:hover { text-decoration: underline; }
+                img { max-width: 100%; border-radius: 12px; margin: 24px 0; display: block; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+                blockquote { border-left: 3px solid #FF736A; padding: 4px 0 4px 18px; margin: 24px 0; color: #666666; font-style: italic; }
+                code { background: #F0F0EE; padding: 2px 6px; border-radius: 4px; font-family: 'SF Mono', 'Menlo', monospace; font-size: 14px; }
+                pre { background: #F0F0EE; padding: 18px; border-radius: 10px; overflow-x: auto; margin: 24px 0; }
+                ul, ol { margin: 16px 0 20px 0; padding-left: 26px; }
+                li { margin-bottom: 8px; line-height: 1.7; }
+                figure { margin: 24px 0; }
+                figcaption { font-size: 12px; color: #999999; margin-top: 8px; text-align: center; }
             </style>
             </head>
             <body>
+                \(byline.isEmpty ? "" : "<p class='article-source'>\(byline)</p>")
                 \(title.isEmpty ? "" : "<h1 class='article-title'>\(title)</h1>")
-                \(byline.isEmpty ? "" : "<p class='article-byline'>\(byline)</p>")
-                \(title.isEmpty ? "" : "<hr class='article-divider'>")
+                <hr class='article-divider'>
                 \(content)
             </body>
             </html>

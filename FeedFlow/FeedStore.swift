@@ -18,10 +18,7 @@ struct Article: Identifiable {
 }
 
 class FeedStore: ObservableObject {
-    @Published var feeds: [Feed] = [
-        Feed(title: "iconfactory", url: "https://blog.iconfactory.com/feed/"),
-        Feed(title: "r/macapps", url: "https://www.reddit.com/r/macapps.rss")
-    ]
+    @Published var feeds: [Feed] = []
     @Published var selectedFeed: Feed? = nil
     @Published var selectedArticle: Article? = nil
 
@@ -36,6 +33,10 @@ class FeedStore: ObservableObject {
             DispatchQueue.main.async {
                 if let index = self.feeds.firstIndex(where: { $0.id == feed.id }) {
                     self.feeds[index].articles = articles
+                    // ← si este feed es el seleccionado, actualizarlo también
+                    if self.selectedFeed?.id == feed.id {
+                        self.selectedFeed = self.feeds[index]
+                    }
                 }
             }
         }.resume()

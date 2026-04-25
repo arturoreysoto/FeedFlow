@@ -6,58 +6,85 @@ struct SidebarView: View {
 
     var body: some View {
         List {
-            Section("Feeds") {
-                Button {
+            Section {
+                sidebarButton(
+                    title: "Inbox",
+                    systemImage: "tray.fill",
+                    isSelected: store.selectedFeed == nil
+                ) {
                     store.selectedFeed = nil
-                } label: {
-                    Label("Inbox", systemImage: "tray.and.arrow.down")
                 }
 
-                Button {
-                    store.flowRandom()
-                } label: {
-                    Label("Flow", systemImage: "shuffle")
-                }
+                sidebarButton(
+                    title: "Favorite Feeds",
+                    systemImage: "star.circle",
+                    isSelected: false
+                ) {}
 
-                Button {} label: {
-                    Label("Flow Feeds", systemImage: "square.grid.2x2")
-                }
-
-                ForEach(store.feeds) { feed in
-                    Button {
-                        store.selectedFeed = feed
-                        store.fetchFeed(feed: feed)
-                    } label: {
-                        Label(feed.title, systemImage: "dot.radiowaves.up.forward")
-                    }
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            if let index = store.feeds.firstIndex(where: { $0.id == feed.id }) {
-                                store.feeds.remove(at: index)
-                            }
-                        } label: {
-                            Label("Delete Feed", systemImage: "trash")
-                        }
-                    }
-                }
-                .onDelete { indexSet in
-                    store.feeds.remove(atOffsets: indexSet)
-                }
+                sidebarButton(
+                    title: "Bookmarks",
+                    systemImage: "bookmark",
+                    isSelected: false
+                ) {}
             }
+            .listRowSeparator(.hidden)
 
             Section {
-                Button {} label: {
-                    Label("Trash", systemImage: "trash")
+                DisclosureGroup {
+                    ForEach(store.feeds) { feed in
+                        Button {
+                            store.selectedFeed = feed
+                            store.fetchFeed(feed: feed)
+                        } label: {
+                            Label {
+                                Text(feed.title)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(Color(hex: "#606060"))
+                            } icon: {
+                                Image(systemName: "dot.radiowaves.up.forward")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(Color(hex: "#606060"))
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                if let index = store.feeds.firstIndex(where: { $0.id == feed.id }) {
+                                    store.feeds.remove(at: index)
+                                }
+                            } label: {
+                                Label("Delete Feed", systemImage: "trash")
+                            }
+                        }
+                    }
+                    .onDelete { indexSet in
+                        store.feeds.remove(atOffsets: indexSet)
+                    }
+                } label: {
+                    Label {
+                        Text("Feeds")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(Color(hex: "#606060"))
+                    } icon: {
+                        Image(systemName: "dot.radiowaves.up.forward")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color(hex: "#606060"))
+                    }
                 }
+                .listRowBackground(Color.clear)
             }
+            .listRowSeparator(.hidden)
         }
         .listStyle(.sidebar)
+        .background(Color(hex: "#f7f6f3"))
         .toolbar {
-            ToolbarItem {
+            ToolbarItem(placement: .automatic) {
                 Button {
                     showAddFeed = true
                 } label: {
-                    Image(systemName: "plus")
+                    Image(systemName: "plus.app")  // ← cambiado
+                        .foregroundColor(Color(hex: "#606060"))
                 }
             }
         }
@@ -65,8 +92,31 @@ struct SidebarView: View {
             AddFeedView(store: store, isPresented: $showAddFeed)
         }
     }
+
+    @ViewBuilder
+    private func sidebarButton(
+        title: String,
+        systemImage: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Label {
+                Text(title)
+                    .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                    .foregroundColor(isSelected ? Color(hex: "#ff736a") : Color(hex: "#606060"))
+            } icon: {
+                Image(systemName: systemImage)
+                    .font(.system(size: 16))
+                    .foregroundColor(isSelected ? Color(hex: "#ff736a") : Color(hex: "#606060"))
+            }
+        }
+        .buttonStyle(.plain)
+        .listRowBackground(Color.clear)
+    }
 }
 
+// MARK: - AddFeedView
 struct AddFeedView: View {
     @ObservedObject var store: FeedStore
     @Binding var isPresented: Bool
@@ -111,7 +161,9 @@ struct AddFeedView: View {
 
     func addFeed() {
         let feedTitle = title.isEmpty ? url : title
-        store.feeds.append(Feed(title: feedTitle, url: url))
+        let newFeed = Feed(title: feedTitle, url: url)
+        store.feeds.append(newFeed)
+        store.selectedFeed = store.feeds.last
         store.fetchFeed(feed: store.feeds.last!)
         isPresented = false
     }

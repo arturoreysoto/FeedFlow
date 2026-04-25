@@ -10,9 +10,13 @@ struct ContentView: View {
         } content: {
             ArticleListView(store: store)
                 .navigationSplitViewColumnWidth(min: 260, ideal: 300)
+                .navigationTitle("Inbox")
         } detail: {
             ArticleDetailView(store: store)
         }
-        .background(Color(red: 0.969, green: 0.965, blue: 0.953))
+        .navigationSplitViewStyle(.balanced)
+        .background(Color(hex: "#FFFDF8"))
+        .toolbar(removing: .sidebarToggle)
+        .toolbarBackground(.hidden, for: .windowToolbar)
     }
 }
