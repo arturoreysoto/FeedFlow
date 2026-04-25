@@ -19,8 +19,7 @@ struct Article: Identifiable {
 
 class FeedStore: ObservableObject {
     @Published var feeds: [Feed] = [
-        Feed(title: "iconfactory", url: "https://iconfactory.com/feed"),
-        Feed(title: "macapps", url: "https://www.reddit.com/r/macapps.rss")
+        Feed(title: "iconfactory", url: "https://blog.iconfactory.com/feed/")
     ]
     @Published var selectedFeed: Feed? = nil
     @Published var selectedArticle: Article? = nil

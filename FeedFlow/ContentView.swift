@@ -6,13 +6,13 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             SidebarView(store: store)
-                .navigationSplitViewColumnWidth(min: 180, ideal: 220)
+                .navigationSplitViewColumnWidth(min: 200, ideal: 242)
         } content: {
             ArticleListView(store: store)
-                .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+                .navigationSplitViewColumnWidth(min: 260, ideal: 300)
         } detail: {
             ArticleDetailView(store: store)
         }
-        .navigationTitle("FeedFlow")
+        .background(Color(hex: "#F7F6F3"))
     }
 }
