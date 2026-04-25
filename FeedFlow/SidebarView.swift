@@ -3,8 +3,6 @@ import SwiftUI
 struct SidebarView: View {
     @ObservedObject var store: FeedStore
     @State private var showAddFeed = false
-    @State private var newFeedTitle = ""
-    @State private var newFeedURL = ""
 
     var body: some View {
         List {
@@ -31,6 +29,15 @@ struct SidebarView: View {
                         store.fetchFeed(feed: feed)
                     } label: {
                         Label(feed.title, systemImage: "dot.radiowaves.up.forward")
+                    }
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            if let index = store.feeds.firstIndex(where: { $0.id == feed.id }) {
+                                store.feeds.remove(at: index)
+                            }
+                        } label: {
+                            Label("Delete Feed", systemImage: "trash")
+                        }
                     }
                 }
                 .onDelete { indexSet in
@@ -69,20 +76,14 @@ struct AddFeedView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             HStack {
-                Button("Cancel") {
-                    isPresented = false
-                }
+                Button("Cancel") { isPresented = false }
                 Spacer()
-                Text("Add Feed")
-                    .font(.system(size: 13, weight: .semibold))
+                Text("Add Feed").font(.system(size: 13, weight: .semibold))
                 Spacer()
-                Button("Add") {
-                    addFeed()
-                }
-                .disabled(url.isEmpty)
-                .fontWeight(.semibold)
+                Button("Add") { addFeed() }
+                    .disabled(url.isEmpty)
+                    .fontWeight(.semibold)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -91,24 +92,17 @@ struct AddFeedView: View {
 
             VStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Name")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                    TextField("My Feed", text: $title)
-                        .textFieldStyle(.roundedBorder)
+                    Text("Name").font(.system(size: 12)).foregroundStyle(.secondary)
+                    TextField("My Feed", text: $title).textFieldStyle(.roundedBorder)
                 }
-
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("URL")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                    Text("URL").font(.system(size: 12)).foregroundStyle(.secondary)
                     TextField("https://example.com/feed", text: $url)
                         .textFieldStyle(.roundedBorder)
                         .focused($urlFocused)
                 }
             }
             .padding(20)
-
             Spacer()
         }
         .frame(width: 340, height: 220)
@@ -117,9 +111,8 @@ struct AddFeedView: View {
 
     func addFeed() {
         let feedTitle = title.isEmpty ? url : title
-        let newFeed = Feed(title: feedTitle, url: url)
-        store.feeds.append(newFeed)
-        store.fetchFeed(feed: newFeed)
+        store.feeds.append(Feed(title: feedTitle, url: url))
+        store.fetchFeed(feed: store.feeds.last!)
         isPresented = false
     }
 }

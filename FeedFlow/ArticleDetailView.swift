@@ -12,15 +12,14 @@ struct ArticleDetailView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "newspaper")
                         .font(.system(size: 40))
-                        .foregroundStyle(Color(hex: "#C0C0C0"))
+                        .foregroundStyle(.secondary)
                     Text("Select an article")
                         .font(.system(size: 13))
-                        .foregroundStyle(Color(hex: "#C0C0C0"))
+                        .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .background(Color.white)
     }
 }
 
@@ -52,7 +51,6 @@ struct ReaderView: NSViewRepresentable {
         func loadArticle() {
             guard let article = article,
                   let url = URL(string: article.link) else {
-                // Sin link — mostrar descripción del RSS directamente
                 showRSSContent()
                 return
             }
@@ -143,7 +141,6 @@ struct ReaderView: NSViewRepresentable {
                     self.webView?.loadHTMLString(readerHTML, baseURL: nil)
                 }
             } else {
-                // Readability falló — usar contenido del RSS
                 showRSSContent()
             }
         }
@@ -166,7 +163,7 @@ struct ReaderView: NSViewRepresentable {
                     margin: 0 auto;
                     padding: 40px 24px 80px 24px;
                 }
-                .article-title { font-size: 26px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; color: #1A1A1A; }
+                .article-title { font-size: 26px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; }
                 .article-byline { font-size: 13px; color: #999999; margin-bottom: 24px; }
                 .article-divider { border: none; border-top: 1px solid #E9E9E7; margin-bottom: 24px; }
                 h1 { font-size: 24px; font-weight: 700; margin: 24px 0 12px; }
